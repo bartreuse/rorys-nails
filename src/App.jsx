@@ -4,7 +4,6 @@ import {
   CalendarDays,
   Clock3,
   User,
-  Phone,
   Trash2,
   CheckCircle2,
   Search,
@@ -24,7 +23,6 @@ const SERVICE_OPTIONS = [
 
 const DEFAULT_FORM = {
   client: "",
-  phone: "",
   date: "",
   time: "",
   service: "Gel Manicure",
@@ -64,27 +62,67 @@ function formatMoney(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
-function StatCard({ label, value }) {
+function Card({ className = "", children }) {
+  return <div className={`rounded-3xl bg-white shadow-lg ${className}`}>{children}</div>;
+}
+
+function CardHeader({ className = "", children }) {
+  return <div className={`p-6 pb-0 ${className}`}>{children}</div>;
+}
+
+function CardTitle({ className = "", children }) {
+  return <h2 className={`text-xl font-semibold text-slate-900 ${className}`}>{children}</h2>;
+}
+
+function CardContent({ className = "", children }) {
+  return <div className={`p-6 ${className}`}>{children}</div>;
+}
+
+function Button({ className = "", variant = "default", type = "button", children, ...props }) {
+  const base = "inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-medium transition";
+  const styles =
+    variant === "outline"
+      ? "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+      : "bg-pink-500 text-white hover:bg-pink-600";
+
   return (
-    <div className="card">
-      <div className="card-content">
-        <div className="stat-label">{label}</div>
-        <div className="stat-value">{value}</div>
-      </div>
-    </div>
+    <button type={type} className={`${base} ${styles} ${className}`} {...props}>
+      {children}
+    </button>
   );
 }
 
-function IconInput({ icon: Icon, className = "", ...props }) {
+function Input({ className = "", ...props }) {
   return (
-    <div className="input-icon-wrap">
-      <Icon size={16} className="input-icon" />
-      <input {...props} className={`input input-with-icon ${className}`.trim()} />
-    </div>
+    <input
+      className={`w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none ring-0 placeholder:text-slate-400 focus:border-pink-400 ${className}`}
+      {...props}
+    />
   );
 }
 
-export default function App() {
+function Label({ className = "", children, ...props }) {
+  return (
+    <label className={`text-sm font-medium text-slate-700 ${className}`} {...props}>
+      {children}
+    </label>
+  );
+}
+
+function Badge({ className = "", children, variant = "default" }) {
+  const styles =
+    variant === "secondary"
+      ? "bg-slate-200 text-slate-700"
+      : "bg-pink-100 text-pink-700";
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${styles} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+export default function NailAppointmentScheduler() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState("");
@@ -110,13 +148,12 @@ export default function App() {
       appointments.filter((appt) => {
         const matchesSearch =
           appt.client.toLowerCase().includes(search.toLowerCase()) ||
-          appt.service.toLowerCase().includes(search.toLowerCase()) ||
-          (appt.phone || "").toLowerCase().includes(search.toLowerCase());
+          appt.service.toLowerCase().includes(search.toLowerCase());
 
-        const matchesStatus =
-          statusFilter === "All" || appt.status === statusFilter;
+        const matchesStatus = statusFilter === "All" || appt.status === statusFilter;
 
         if (appt.status === "Completed") return false;
+
         return matchesSearch && matchesStatus;
       })
     );
@@ -164,13 +201,7 @@ export default function App() {
         end.setDate(end.getDate() + 6);
         return {
           ...week,
-          label: `${week.start.toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })} - ${end.toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })}`,
+          label: `${week.start.toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${end.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`,
         };
       });
   }, [appointments]);
@@ -224,130 +255,136 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
-      <div className="container">
+    <div className="min-h-screen bg-pink-100 p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="logo-wrap"
+          className="flex items-center justify-center"
         >
-          <div className="logo-oval">
-            <h1 className="logo-text">Rorys Nails</h1>
+          <div className="flex h-48 w-96 items-center justify-center rounded-full border-4 border-yellow-400 bg-white shadow-xl">
+            <h1 className="text-center text-8xl leading-none text-black" style={{ fontFamily: "Brush Script MT, cursive" }}>
+              Rorys Nails
+            </h1>
           </div>
         </motion.div>
 
-        <div className="stats-grid">
-          <StatCard label="Total Appointments" value={stats.total} />
-          <StatCard label="Today" value={stats.today} />
-          <StatCard label="Completed" value={stats.completed} />
-          <StatCard label="Total Money" value={formatMoney(stats.totalMoney)} />
+        <div className="grid gap-6 md:grid-cols-4">
+          {[
+            { label: "Total Appointments", value: stats.total },
+            { label: "Today", value: stats.today },
+            { label: "Completed", value: stats.completed },
+            { label: "Total Money", value: formatMoney(stats.totalMoney) },
+          ].map((item) => (
+            <Card key={item.label} className="shadow-md">
+              <CardContent className="p-5">
+                <div className="text-sm text-slate-500">{item.label}</div>
+                <div className="mt-2 text-3xl font-bold text-slate-900">{item.value}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        <div className="layout-grid">
-          <div className="form-stack">
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">Add New Appointment</h2>
-              </div>
-              <div className="card-content">
-                <form onSubmit={handleSubmit} className="form-stack">
-                  <div className="field">
-                    <label className="label" htmlFor="client">Client Name</label>
-                    <IconInput
-                      icon={User}
+        <div className="grid gap-6 lg:grid-cols-[420px,1fr]">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add New Appointment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="client">Client Name</Label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                    <Input
                       id="client"
+                      className="pl-9"
                       value={form.client}
                       onChange={(e) => updateField("client", e.target.value)}
                       placeholder="Ex: Ava"
                     />
                   </div>
+                </div>
 
-                  <div className="field">
-                    <label className="label" htmlFor="phone">Phone Number</label>
-                    <IconInput
-                      icon={Phone}
-                      id="phone"
-                      value={form.phone}
-                      onChange={(e) => updateField("phone", e.target.value)}
-                      placeholder="Ex: 555-123-4567"
-                    />
-                  </div>
-
-                  <div className="two-col">
-                    <div className="field">
-                      <label className="label" htmlFor="date">Date</label>
-                      <IconInput
-                        icon={CalendarDays}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Date</Label>
+                    <div className="relative">
+                      <CalendarDays className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                      <Input
                         id="date"
                         type="date"
+                        className="pl-9"
                         value={form.date}
                         onChange={(e) => updateField("date", e.target.value)}
                       />
                     </div>
-
-                    <div className="field">
-                      <label className="label" htmlFor="time">Time</label>
-                      <IconInput
-                        icon={Clock3}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Time</Label>
+                    <div className="relative">
+                      <Clock3 className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                      <Input
                         id="time"
                         type="time"
+                        className="pl-9"
                         value={form.time}
                         onChange={(e) => updateField("time", e.target.value)}
                       />
                     </div>
                   </div>
+                </div>
 
-                  <div className="field">
-                    <label className="label" htmlFor="service">Service</label>
-                    <select
-                      id="service"
-                      className="select"
-                      value={form.service}
-                      onChange={(e) => updateField("service", e.target.value)}
-                    >
-                      {SERVICE_OPTIONS.map((service) => (
-                        <option key={service} value={service}>
-                          {service}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="service">Service</Label>
+                  <select
+                    id="service"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-pink-400"
+                    value={form.service}
+                    onChange={(e) => updateField("service", e.target.value)}
+                  >
+                    {SERVICE_OPTIONS.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                  <div className="field">
-                    <label className="label" htmlFor="notes">Notes</label>
-                    <input
-                      id="notes"
-                      className="input"
-                      value={form.notes}
-                      onChange={(e) => updateField("notes", e.target.value)}
-                      placeholder="Color, design idea, or special request"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Input
+                    id="notes"
+                    value={form.notes}
+                    onChange={(e) => updateField("notes", e.target.value)}
+                    placeholder="Color, design idea, or special request"
+                  />
+                </div>
 
-                  <button type="submit" className="button">
-                    Save Appointment
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
+                <Button type="submit" className="w-full text-base">
+                  Save Appointment
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-          <div className="right-stack">
-            <div className="card">
-              <div className="card-header">
-                <div className="toolbar">
-                  <h2 className="card-title">Upcoming Appointments</h2>
-                  <div className="toolbar-right">
-                    <div className="search-box">
-                      <IconInput
-                        icon={Search}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="gap-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <CardTitle>Upcoming Appointments</CardTitle>
+                  <div className="flex flex-col gap-3 md:flex-row">
+                    <div className="relative min-w-[220px]">
+                      <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                      <Input
+                        className="pl-9"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search client or service"
                       />
                     </div>
                     <select
-                      className="select"
+                      className="min-w-[160px] rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-pink-400"
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
                     >
@@ -357,79 +394,57 @@ export default function App() {
                     </select>
                   </div>
                 </div>
-              </div>
-              <div className="card-content">
+              </CardHeader>
+              <CardContent>
                 {filteredAppointments.length === 0 ? (
-                  <div className="empty-state">
+                  <div className="rounded-3xl border border-dashed border-slate-200 p-10 text-center text-slate-500">
                     No appointments yet. Add your first booking on the left.
                   </div>
                 ) : (
-                  <div className="right-stack">
+                  <div className="space-y-4">
                     {filteredAppointments.map((appt) => (
                       <motion.div
                         key={appt.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="appointment"
+                        className="rounded-3xl border bg-white p-4 shadow-sm"
                       >
-                        <div className="appointment-row">
-                          <div className="appointment-main">
-                            <div className="client-row">
-                              <div className="client-name">{appt.client}</div>
-                              <span
-                                className={`badge ${
-                                  appt.status === "Completed"
-                                    ? "badge-completed"
-                                    : "badge-booked"
-                                }`}
-                              >
-                                {appt.status}
-                              </span>
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-semibold text-slate-900">{appt.client}</h3>
+                              <Badge variant={appt.status === "Completed" ? "secondary" : "default"}>{appt.status}</Badge>
                             </div>
-
-                            <div className="meta-row">
+                            <div className="flex flex-wrap gap-3 text-sm text-slate-600">
                               <span>{formatDate(appt.date)}</span>
                               <span>{appt.time}</span>
                               <span>{appt.service}</span>
-                              {appt.phone ? <span>{appt.phone}</span> : null}
                             </div>
-
-                            {appt.notes ? (
-                              <div className="notes">Notes: {appt.notes}</div>
-                            ) : null}
+                            {appt.notes ? <p className="text-sm text-slate-500">Notes: {appt.notes}</p> : null}
                           </div>
 
-                          <div className="appointment-actions">
-                            <IconInput
-                              icon={DollarSign}
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={appt.amount || ""}
-                              onChange={(e) =>
-                                updateAppointmentAmount(appt.id, e.target.value)
-                              }
-                              placeholder="Add price"
-                            />
-
-                            <div className="button-row">
-                              <button
-                                type="button"
-                                className="button-outline"
-                                onClick={() => toggleComplete(appt.id)}
-                              >
-                                <CheckCircle2 size={16} style={{ marginRight: 6, verticalAlign: "text-bottom" }} />
+                          <div className="flex flex-col gap-2 md:items-end">
+                            <div className="relative w-full md:w-[150px]">
+                              <DollarSign className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="pl-9"
+                                value={appt.amount || ""}
+                                onChange={(e) => updateAppointmentAmount(appt.id, e.target.value)}
+                                placeholder="Add price"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" onClick={() => toggleComplete(appt.id)}>
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
                                 {appt.status === "Completed" ? "Mark Booked" : "Complete"}
-                              </button>
-
-                              <button
-                                type="button"
-                                className="button-outline"
-                                onClick={() => deleteAppointment(appt.id)}
-                              >
-                                <Trash2 size={16} style={{ marginRight: 6, verticalAlign: "text-bottom" }} />
+                              </Button>
+                              <Button variant="outline" onClick={() => deleteAppointment(appt.id)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -437,35 +452,33 @@ export default function App() {
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">Weekly Earnings</h2>
-              </div>
-              <div className="card-content">
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Earnings</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {weeklyEarnings.length === 0 ? (
-                  <div className="small-muted">
+                  <div className="rounded-3xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
                     Complete appointments and add prices to see your money by week.
                   </div>
                 ) : (
-                  <div className="week-list">
+                  <div className="space-y-3">
                     {weeklyEarnings.map((week) => (
-                      <div key={week.key} className="week-item">
+                      <div key={week.key} className="flex items-center justify-between rounded-2xl border bg-white p-4">
                         <div>
-                          <div className="week-title">Week of {week.label}</div>
-                          <div className="week-subtitle">
-                            Completed appointment earnings
-                          </div>
+                          <div className="text-sm font-medium text-slate-900">Week of {week.label}</div>
+                          <div className="text-xs text-slate-500">Completed appointment earnings</div>
                         </div>
-                        <div className="week-value">{formatMoney(week.total)}</div>
+                        <div className="text-lg font-bold text-slate-900">{formatMoney(week.total)}</div>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
